@@ -1,0 +1,134 @@
+---
+title: "W4_Chess 607 Project 1"
+author: "Chunhui Zhu"
+date: "September 22, 2017"
+output: html_document
+---
+
+```{r eco=FALSE}
+#r environment
+library('stringr')
+library('tidyr')
+library('dplyr')
+```
+
+```{r}
+#file.choose: choose file from the pop up screen
+#create a data frame by using scan function read in data as character and seperate by \n
+a<-data.frame(scan(file.choose(),what=character(),sep="\n"))
+a
+```
+```{r}
+#the data set is a one dimention with 196 rows 
+#Assign a column name
+#use gsub function to change"-----" to "" in info column
+dim(a)
+colnames(a)<-c("info")
+a<-data.frame(gsub("-+","",a$info))
+head(a)
+```
+
+
+```{r}
+#remove empty lines
+b<-data.frame(a[a != ""])
+head(b)
+```
+
+
+```{r}
+#create matrix 130*10 to store the data
+#in each string line:trim whitespace from right, seperate string base on "|"
+data<- as.data.frame(matrix(data=NA,nrow=130,ncol=10))
+for (i in 1:nrow(b)){
+   c<-unlist(strsplit(trimws(toString(b[i,1]),which=c("right")),"\\|"),use.names=FALSE)
+   data[i,]<-c
+}
+head(data)
+```
+
+
+
+```{r}
+#built tow data frames, skip first two rows headers
+#one read in  odd number rows,another read in even number rows.
+#assign new column names to two data frames
+df<-data
+df1<-data
+
+df<-df[seq(3,nrow(data),2),]
+colnames(df)<- c("Pair", "Player_Name","Total","Round1","Round2","Round3","Round4","Round5","Round6","Round7")
+head(df)
+
+df1<-df1[seq(4,nrow(data),2),]
+colnames(df1)<- c("States","USCF_ID/Rtg(Pre->Post)","Pts","R1","R2","R3","R4","R5","R6","R7")
+head(df1)
+```
+
+
+```{r}
+#in df: only remain number values in each round and convert it to numeric data type
+for (i in 4:10){ df[,i]<-as.numeric(gsub("[^0-9]+", "", df[,i])) }
+head(df)
+```
+
+
+```{r}
+#in df1: only remain preRating value and convert it to numeric data type
+#rename column name of preRating
+df1[,2]<-str_extract(df1[,2],":\\s*[0-9]+")
+df1[,2]<-as.numeric(str_extract(df1[,2],"[0-9]+"))
+names(df1)[2]<-paste("pre")
+head(df1)
+```
+
+
+```{r}
+#assign an empty column in df
+#using two dimetion for loop to find a match ID with preRating
+#calcualte average rate and store into new created "avg" column
+
+df["avg"] <- NA
+
+for (i in 1:64){
+     sum<-0
+     a<-0
+     for (j in 4:10){
+           if (is.na(df[i,j])){
+             df[i,j]<-0
+             j<-j+1
+           }
+           else {
+            num<-df[i,j]
+            sum<-sum+df1[num,2]
+            j<-j+1
+            a<-a+1
+            }
+           
+      } 
+     df[i,"avg"]<-sum/a
+}
+df[,"avg"]
+```
+
+
+```{r}
+#create a new data frame include all info, and remove the index column
+df3<-data.frame(df$Pair,df$Player_Name,df1$States,df$Total,df1$pre,df$avg)[,-1]
+show(df3)
+```
+
+
+```{r}
+#creat a tournament.csv file for df3 data set at "C:/Users/Ivy/Desktop/607/W4""
+setwd("C:/Users/Ivy/Desktop/607/W4")
+write.csv(df3,"tournament.csv")
+```
+
+
+
+
+
+
+
+
